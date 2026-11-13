@@ -16,9 +16,9 @@ npm run dev
 
 ```
 src/
-  app/            화면 (onboarding, route, status, materials/new, session, 홈)
+  app/            화면 (onboarding, route, status, materials/new, session, arrival, plan, 홈)
   components/     공용 UI, session/ 아래에 모드별 화면
-  data/stations   역 순서와 역간 소요 시간 (임시값)
+  data/stations   소요산~서울역 역 순서와 역간 소요 시간 (거리 기반 추정값)
   lib/
     trip.ts       남은 시간·현재 역 추정, 보정, 알림 시각 계산
     content.ts    남은 시간별 콘텐츠 선택 규칙 (경계값은 여기서만 조정)
@@ -39,6 +39,5 @@ public/sw.js      오프라인 캐시, 푸시 수신
 
 ## 아직 없는 것
 
-- Figma에서 비어 있던 화면: 세션 마무리(하차 준비), 남은 시간 기반 콘텐츠 화면
 - 서버 API 구현 (위 계약만 정의)
-- 역 데이터 실측 보정, P1 기능 (즐겨찾기 구간, GPS 보정)
+- 역간 소요 시간 실측 보정, P1 기능 (즐겨찾기 구간, GPS 보정)
