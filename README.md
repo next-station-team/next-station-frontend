@@ -29,15 +29,21 @@ src/
 public/sw.js      오프라인 캐시, 푸시 수신
 ```
 
-## 서버에 기대하는 API
+## 백엔드 연동
 
-| 엔드포인트 | 요청 | 설명 |
-| --- | --- | --- |
-| `POST /api/push/subscribe` | `{ deviceId, subscription }` | 푸시 구독 등록 |
-| `POST /api/alarms` | `{ deviceId, sessionId, alarms: [{ kind, at }] }` | 기존 예약을 지우고 재등록 (`at`은 ms) |
-| `POST /api/generate` | `{ text }` | `{ title, blocks[] }` 반환. 블록은 `summary`/`quiz`/`word` + `seconds` |
+`next.config.ts`의 rewrites가 `/api/*` 요청을 `API_BASE_URL`로 넘기므로 브라우저에서는 CORS 설정이 필요 없다.
+`.env.local`(로컬)과 Vercel 환경변수에 아래 값을 넣는다. (`.env.example` 참고)
+
+| 변수 | 설명 |
+| --- | --- |
+| `API_BASE_URL` | 백엔드 주소 (서버 전용, 끝에 `/` 없이) |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | VAPID 공개키. 비워 두면 `GET /api/push/vapid-public-key`로 받는다 |
+
+사용하는 API는 백엔드 레포 `docs/f00-f04-api.md` 기준이다: 푸시 구독, 테스트 푸시, 알림 예약(PUT)·취소(DELETE).
+알림 시각은 서버가 계산하므로 프론트는 도착 예정 시각(`arrivalAt`)만 보낸다.
+AI 콘텐츠 생성(`POST /api/generate`)은 백엔드 명세에 아직 없어서 임시 경로를 쓴다.
 
 ## 아직 없는 것
 
-- 서버 API 구현 (위 계약만 정의)
+- AI 콘텐츠 생성 API 연동 (백엔드 명세 확정 후 `lib/api.ts`의 경로와 응답 형식을 맞춘다)
 - 역간 소요 시간 실측 보정, P1 기능 (즐겨찾기 구간, GPS 보정)

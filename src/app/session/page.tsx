@@ -9,10 +9,11 @@ import ProgressLine from "@/components/ProgressLine";
 import { STATUS_INFO } from "@/components/StatusCard";
 import AudioView from "@/components/session/AudioView";
 import FocusView from "@/components/session/FocusView";
+import { api } from "@/lib/api";
 import { pickBlocks } from "@/lib/content";
 import { clear, load, save, useStored } from "@/lib/db";
 import { useAlarmSync, useNow } from "@/lib/hooks";
-import { LEAD_MIN, progressAt, stationById, toMinutes } from "@/lib/trip";
+import { FINISH_AT_SECS, PREPARE_AT_SECS, progressAt, stationById, toMinutes } from "@/lib/trip";
 import { MODE_OF, type Progress, type Status } from "@/lib/types";
 
 const STATUSES: Status[] = ["sit", "stand", "tired"];
@@ -33,14 +34,14 @@ function SessionView() {
   const s = session.value;
   const trip = useMemo(() => (s ? progressAt(s, now) : null), [s, now]);
   const mode = s ? MODE_OF[s.status] : "rest";
-  const closing = !!trip && trip.remaining < LEAD_MIN * 60;
+  const closing = !!trip && trip.remaining < FINISH_AT_SECS;
 
   const queue = useMemo(() => {
     const picked = pickBlocks(trip?.remaining ?? 0, blocks.value ?? []);
     return mode === "audio" ? picked.filter((b) => b.kind === "summary") : picked;
   }, [trip?.remaining, blocks.value, mode]);
 
-  const arriving = !!trip && trip.remaining <= 60;
+  const arriving = !!trip && trip.remaining <= PREPARE_AT_SECS;
   useEffect(() => {
     if (!arriving) return;
     const keep = cursor ?? (queue[0] && { blockId: queue[0].id, materialId: queue[0].materialId, pos: 0 });
@@ -75,6 +76,7 @@ function SessionView() {
 
   const finish = async () => {
     if (block) await save("progress", { blockId: block.id, materialId: block.materialId, pos });
+    api.cancelAlarms(s.id).catch(() => {});
     await clear("session");
     router.replace("/");
   };

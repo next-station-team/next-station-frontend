@@ -2,8 +2,9 @@ import { STATIONS } from "@/data/stations";
 import type { Session, Station } from "./types";
 
 export const LEAD_MIN = 5;
-/** 일찍 도착하는 쪽이 더 위험하므로 알림을 이만큼 앞당긴다 */
-const MARGIN_SEC = 60;
+/** 서버가 여유 1분을 더해 보내는 알림 시점에 맞춘 화면 전환 기준(초) */
+export const FINISH_AT_SECS = (LEAD_MIN + 1) * 60;
+export const PREPARE_AT_SECS = 120;
 
 export const stationById = (id: string) => STATIONS.find((s) => s.id === id);
 
@@ -54,14 +55,8 @@ export function progressAt(session: Session, now: number) {
   };
 }
 
-/** 서버에 등록할 알림 시각(ms). 이미 지난 시각은 제외한다 */
-export function alarmTimes(session: Session, now = Date.now()) {
-  const { remaining } = progressAt(session, now);
-  const arriveAt = now + remaining * 1000;
-  return [
-    { kind: "lead" as const, at: arriveAt - LEAD_MIN * 60_000 - MARGIN_SEC * 1000 },
-    { kind: "last" as const, at: arriveAt - 60_000 - MARGIN_SEC * 1000 },
-  ].filter((a) => a.at > now);
-}
+/** 서버에 등록할 도착 예정 시각. 알림 여유분은 서버가 계산한다 */
+export const arrivalAt = (session: Session, now = Date.now()) =>
+  new Date(now + progressAt(session, now).remaining * 1000).toISOString();
 
 export const toMinutes = (secs: number) => Math.max(1, Math.ceil(secs / 60));

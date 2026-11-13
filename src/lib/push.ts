@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { api } from "./api";
+import { api, ApiError } from "./api";
 
 export type PushState = "unsupported" | "needs-install" | "default" | "denied" | "granted";
 
@@ -22,13 +22,22 @@ const urlBase64ToBytes = (b64: string) => {
 export async function enablePush() {
   if ((await Notification.requestPermission()) !== "granted") return false;
   const reg = await navigator.serviceWorker.ready;
-  const sub =
-    (await reg.pushManager.getSubscription()) ??
-    (await reg.pushManager.subscribe({
+
+  let sub = await reg.pushManager.getSubscription();
+  if (!sub) {
+    const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || (await api.vapidKey()).publicKey;
+    sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToBytes(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""),
-    }));
-  await api.subscribe(sub.toJSON());
+      applicationServerKey: urlBase64ToBytes(key),
+    });
+  }
+
+  const { endpoint, keys } = sub.toJSON();
+  try {
+    await api.subscribe(endpoint!, keys as { p256dh: string; auth: string });
+  } catch (e) {
+    if (!(e instanceof ApiError && e.code === "SUBSCRIPTION_ALREADY_REGISTERED")) throw e;
+  }
   return true;
 }
 
