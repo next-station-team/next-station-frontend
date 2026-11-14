@@ -56,7 +56,7 @@ function SessionView() {
 
   const idx = Math.max(0, queue.findIndex((b) => b.id === cursor?.blockId));
   const block = queue[idx];
-  const pos = cursor?.blockId === block?.id ? cursor.pos : 0;
+  const pos = cursor && block && cursor.blockId === block.id ? cursor.pos : 0;
 
   const moveTo = (blockId: string, materialId: string, p = 0) => {
     const next = { blockId, materialId, pos: p };
