@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async rewrites() {
+    const api = process.env.API_BASE_URL;
+    return api ? [{ source: "/api/:path*", destination: `${api}/api/:path*` }] : [];
+  },
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

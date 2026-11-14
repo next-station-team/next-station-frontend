@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import Screen from "@/components/Screen";
+import { api, ApiError } from "@/lib/api";
 import { enablePush } from "@/lib/push";
 
 const GUIDE = {
@@ -13,17 +14,44 @@ const GUIDE = {
 
 export default function Onboarding() {
   const router = useRouter();
-  const [step, setStep] = useState<"install" | "permission">("install");
+  const [step, setStep] = useState<"install" | "permission" | "done">("install");
   const [device, setDevice] = useState<keyof typeof GUIDE>(() =>
     typeof navigator !== "undefined" && /iphone|ipad/i.test(navigator.userAgent) ? "iphone" : "android",
   );
   const [failed, setFailed] = useState(false);
+  const [testMsg, setTestMsg] = useState("");
 
   const allow = async () => {
     const ok = await enablePush().catch(() => false);
-    if (ok) router.replace("/");
+    if (ok) setStep("done");
     else setFailed(true);
   };
+
+  const test = async () => {
+    setTestMsg("보내는 중...");
+    try {
+      await api.testPush();
+      setTestMsg("알림을 보냈어요. 잠시 후 도착하는지 확인해 주세요");
+    } catch (e) {
+      setTestMsg(e instanceof ApiError && e.code === "TEST_PUSH_RATE_LIMITED" ? "30초 뒤에 다시 시도해 주세요" : "보내지 못했어요. 잠시 후 다시 시도해 주세요");
+    }
+  };
+
+  if (step === "done") {
+    return (
+      <div className="flex min-h-dvh flex-col justify-between bg-brand px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-24 text-white">
+        <div>
+          <h1 className="text-2xl font-bold leading-snug">알림이 켜졌어요</h1>
+          <p className="mt-3 text-white/75">테스트 알림으로 잘 오는지 한 번 확인해 보세요</p>
+          {testMsg && <p className="mt-6 rounded-xl bg-white/15 p-4 text-sm">{testMsg}</p>}
+        </div>
+        <div className="space-y-2">
+          <Button variant="soft" onClick={test}>테스트 알림 받기</Button>
+          <Button variant="white" onClick={() => router.replace("/")}>시작하기</Button>
+        </div>
+      </div>
+    );
+  }
 
   if (step === "permission") {
     return (

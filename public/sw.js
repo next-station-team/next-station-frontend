@@ -27,11 +27,24 @@ self.addEventListener("fetch", (e) => {
 });
 
 self.addEventListener("push", (e) => {
-  const { title = "다음역", body = "" } = e.data?.json() ?? {};
-  e.waitUntil(self.registration.showNotification(title, { body, icon: "/icon-192.png", tag: "arrival" }));
+  const d = e.data?.json() ?? {};
+  e.waitUntil(
+    self.registration.showNotification(d.title ?? "다음역", {
+      body: d.body ?? "",
+      icon: "/icon-192.png",
+      tag: d.tag,
+      data: { url: d.type === "TEST" ? "/" : "/session" },
+    }),
+  );
 });
 
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
-  e.waitUntil(clients.openWindow("/session"));
+  const url = e.notification.data?.url ?? "/";
+  e.waitUntil(
+    clients.matchAll({ type: "window" }).then((list) => {
+      const open = list[0];
+      return open ? open.focus().then(() => open.navigate(url)) : clients.openWindow(url);
+    }),
+  );
 });

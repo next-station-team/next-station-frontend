@@ -59,6 +59,14 @@ export default function Home() {
         <span className="text-sub">›</span>
       </Link>
 
+      <Link href="/plan" className="mt-3 flex items-center justify-between rounded-2xl bg-surface px-5 py-4">
+        <span>
+          <span className="block font-semibold">남은 시간별 콘텐츠</span>
+          <span className="text-sm text-sub">시간대마다 어떻게 구성되는지 미리 봐요</span>
+        </span>
+        <span className="text-sub">›</span>
+      </Link>
+
       <div className="mt-auto pb-6 pt-10">
         <Link href="/route">
           <Button>세션 시작</Button>
