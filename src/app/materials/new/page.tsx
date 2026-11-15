@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import Screen from "@/components/Screen";
 import { api } from "@/lib/api";
-import { load, save } from "@/lib/db";
+import { clear, load, save } from "@/lib/db";
 
 const MAX = 5000;
 
@@ -22,9 +22,12 @@ export default function NewMaterial() {
       const { title, blocks } = await api.generate(text);
       const materialId = crypto.randomUUID();
       const [materials = [], saved = []] = await Promise.all([load("materials"), load("blocks")]);
+      const created = blocks.map((b) => ({ ...b, id: crypto.randomUUID(), materialId }) as (typeof saved)[number]);
+      // 새로 만든 자료가 다음 세션에서 먼저 나오도록 앞에 두고, 이전 자료의 이어 하기 위치는 지운다
       await Promise.all([
-        save("materials", [...materials, { id: materialId, title, text, createdAt: Date.now() }]),
-        save("blocks", [...saved, ...blocks.map((b) => ({ ...b, id: crypto.randomUUID(), materialId }) as (typeof saved)[number])]),
+        save("materials", [{ id: materialId, title, text, createdAt: Date.now() }, ...materials]),
+        save("blocks", [...created, ...saved]),
+        clear("progress"),
       ]);
       router.replace("/");
     } catch {
